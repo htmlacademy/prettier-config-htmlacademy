@@ -99,14 +99,86 @@ For format on save, add to `.vscode/settings.json`:
 }
 ```
 
-## Choosing Between Prettier and `@stylistic`
+## Using with ESLint and Stylelint
 
-The HTML Academy Codeguide is implemented in two parallel ways:
+Prettier handles formatting; ESLint and Stylelint find bugs and enforce conventions. They can — and should — work together in one project, as long as you stop the linters from fighting Prettier over the same whitespace.
 
-- **Prettier** (this package) — one formatter for every supported language, format on save, no per-rule reports.
-- **`@stylistic`** inside [`eslint-config-htmlacademy`](https://github.com/htmlacademy/eslint-config-htmlacademy) and [`stylelint-config-htmlacademy`](https://github.com/htmlacademy/stylelint-config-htmlacademy) — formatting rules reported alongside other linter rules, fixable with `eslint --fix` and `stylelint --fix`.
+**Install all three:**
 
-Pick one. Running both at the same time will cause both to fight over the same files.
+```bash
+npm install -D \
+  prettier prettier-config-htmlacademy \
+  eslint eslint-config-htmlacademy eslint-config-prettier \
+  stylelint stylelint-config-htmlacademy
+```
+
+[`eslint-config-prettier`](https://github.com/prettier/eslint-config-prettier) is the official package that turns off ESLint rules that conflict with Prettier.
+
+**`prettier.config.js`:**
+
+```js
+import preset from 'prettier-config-htmlacademy';
+export default preset;
+```
+
+**`eslint.config.js`** — `eslint-config-prettier/flat` must come last so it overrides formatting rules from the HTML Academy preset:
+
+```js
+import vanilla from 'eslint-config-htmlacademy/vanilla';
+import prettier from 'eslint-config-prettier/flat';
+
+export default [...vanilla, prettier];
+```
+
+**`stylelint.config.js`** — turn off the `@stylistic` rules and empty-line spacing, keep everything else (including [`order/properties-order`](https://github.com/hudochenkov/stylelint-order) — Prettier doesn't reorder CSS properties):
+
+```js
+import htmlacademy from 'stylelint-config-htmlacademy';
+
+const stylisticOff = Object.fromEntries(
+  Object.keys(htmlacademy.rules)
+    .filter((rule) => rule.startsWith('@stylistic/'))
+    .map((rule) => [rule, null]),
+);
+
+export default {
+  ...htmlacademy,
+  rules: {
+    ...htmlacademy.rules,
+    ...stylisticOff,
+    'at-rule-empty-line-before': null,
+    'rule-empty-line-before': null,
+  },
+};
+```
+
+**Add scripts to `package.json`:**
+
+```json
+{
+  "scripts": {
+    "format": "prettier . --write",
+    "lint:js": "eslint .",
+    "lint:css": "stylelint \"**/*.{css,scss}\"",
+    "lint": "npm run lint:js && npm run lint:css",
+    "check": "prettier . --check && npm run lint"
+  }
+}
+```
+
+Day to day: Prettier formats on save in the editor; `npm run lint` and `npm run check` run in CI and before commits.
+
+### Who does what
+
+| Tool | Responsibility |
+|---|---|
+| Prettier | Indentation, quotes, semicolons, line breaks, trailing commas — JS, TS, JSX, CSS, HTML, MD, JSON, YAML |
+| ESLint | JavaScript and TypeScript correctness — unused variables, unsafe patterns, modern syntax, file naming |
+| Stylelint | CSS correctness — BEM class names, property ordering, modern color functions, max nesting, vendor prefixes |
+
+### Alternative: linters only, without Prettier
+
+If you would rather not add a third tool, skip this package and use `eslint-config-htmlacademy` and `stylelint-config-htmlacademy` on their own. Their built-in `@stylistic` rules cover the same formatting, with `eslint --fix` and `stylelint --fix` as your formatter.
 
 ## Links
 
