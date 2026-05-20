@@ -1,0 +1,10 @@
+._*
+.DS_Store
+*.local.*
+.worktrees/
+node_modules/
+.idea/
+.vscode/
+.zed/
+docs/
+plan/

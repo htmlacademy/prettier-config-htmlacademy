@@ -1,0 +1,23 @@
+@use "sass:color";
+
+$brand-color: #1a73e8;
+$brand-color-dark: color.adjust($brand-color, $lightness: -15%);
+
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.button {
+  @include button-base;
+
+  color: #ffffff;
+  background-color: $brand-color;
+
+  &:hover {
+    background-color: $brand-color-dark;
+  }
+}
